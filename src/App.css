@@ -1,0 +1,52 @@
+.App {
+    padding: 20px
+}
+
+.ReactTable .rt-td {
+    align-self: center
+}
+
+.ReactTable .rt-td input {
+    width: 100%;
+    border: 0;
+    font-size: 16px;
+    background: transparent
+}
+
+.ReactTable .rt-td div[contenteditable=true] {
+    background-color: #0000;
+    border-bottom: 1px solid #ccc;
+    width: 100%;
+    outline: none;
+    overflow: hidden
+}
+
+.btn {
+    cursor: pointer;
+    border: 1px solid #eee;
+    padding: 5px 12px;
+    color: #fff;
+    font-weight: bold;
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.2);
+    border-radius: 5px;  
+    min-width: 80px
+}
+
+.btn.save {
+    background-color: #2ECC40
+}
+
+.btn.edit {
+    background-color: #FF851B
+}
+
+.btn.remove, .btn.cancel  {
+    background-color: #FF4136
+}
+
+.btn:hover {
+    text-shadow: none;
+    color: #555555;
+    background-color: #ececec;
+    border: 1px solid #c5c5c5
+}
