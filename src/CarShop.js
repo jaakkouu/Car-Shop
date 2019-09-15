@@ -8,6 +8,7 @@ const CarShop = () => {
     const [pages, setPages] = useState(null);
     const [loading, setLoading] = useState(false);
     const [editing, setEditing] = useState(null);
+    const apiUrl = 'https://carstockrest.herokuapp.com';
     const pageSize = 10;
 
     useEffect(() => fetchData(), [])
@@ -16,7 +17,7 @@ const CarShop = () => {
         if(editing !== null && editing.index === row.index){
             return (
                 <div style={{"textAlign": "center"}}>
-                    <button className="btn save" onClick={() => save()}>Save</button>
+                    <button className="btn save" onClick={save}>Save</button>
                     <button className="btn cancel" onClick={() => setEditing(null)}>Cancel</button>
                 </div>
             )
@@ -24,7 +25,7 @@ const CarShop = () => {
             return (
                 <div style={{"textAlign": "center"}}>
                     <button className="btn edit" onClick={() => edit(row)}>Edit</button>
-                    <button className="btn remove" onClick={() => remove(row)}>Delete</button>
+                    <button className="btn remove" onClick={() => remove(row.original._links.self.href)}>Delete</button>
                 </div>
             )
         }
@@ -64,7 +65,7 @@ const CarShop = () => {
 
     const fetchData = () => {
         setLoading(true);
-        fetch('https://carstockrest.herokuapp.com/cars')
+        fetch(`${apiUrl}/cars`)
         .then(response => response.json())
         .then((data) => {
             setLoading(false);
@@ -80,33 +81,49 @@ const CarShop = () => {
         setEditing(row);
     }
 
-    const remove = row => {
-        //cars.splice(cars[row.index], 1);
+    const remove = url => {
+        setLoading(true);
+        fetch(url, {method: 'DELETE'})
+        .then(() => {
+            setLoading(false);
+        })
     }
 
     const save = () => {
-        setEditing(null);
+        setLoading(true);
+        fetch(editing.original._links.self.href, {
+            method: 'PUT',
+            body: JSON.stringify(editing.original),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(() => {
+            setLoading(false);
+            setEditing(null);
+        });
     }
 
     const add = () => {
-        let car = {
-            'brand': 'Type a brand',
-            'model': 'Type a model',
-            'color': 'Type a color',
-            'fuel': 'Type a fuel',
-            'price': 'Type a price',
-            'year': 'Type a price'
-        }
-        cars.unshift(car);
-        setCars(cars);
+        let newCars = cars;
+        newCars.unshift({
+            'brand': '',
+            'model': '',
+            'color': '',
+            'fuel': '',
+            'price': '',
+            'year': ''
+        });
+        console.log(newCars);
+        setCars(newCars);
     }
 
     const editableCell = props => {
         return (editing !== null && editing.index === props.index) ? (<div
             onBlur={e => {
-                let test = editing;
-                test.original[props.column.id] = e.target.innerHTML;
-                setEditing(test);
+                let row = editing;
+                row.original[props.column.id] = e.target.innerHTML;
+                setEditing(row);
             }}
             contentEditable="true"
             suppressContentEditableWarning>
@@ -114,11 +131,17 @@ const CarShop = () => {
         </div>) : props.value;
     }
 
+    const exportCSV = () => {
+
+    }
+
     return (
         <div>
             <header>
                 <h1>Car Shop Management Tool</h1>
-                <span onClick={add}>Add New Car</span>
+                <div>
+                    <button className="btn primary" onClick={add}>Create New Car</button>
+                </div>
             </header>
             <main>
                 <ReactTable
@@ -131,7 +154,7 @@ const CarShop = () => {
                 />
             </main>
             <footer>
-                Export CSV
+                <button className="btn primary" onClick={exportCSV}>Export CSV</button>
             </footer>
         </div>
     )
