@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import ReactTable from 'react-table';
+import {CSVDownload} from 'react-csv';
 import 'react-table/react-table.css';
 
 const CarShop = () => {
 
-    const [cars, setCars] = useState([]);
+    const [data, setData] = useState({});
     const [pages, setPages] = useState(null);
     const [loading, setLoading] = useState(false);
     const [editing, setEditing] = useState(null);
@@ -15,17 +16,26 @@ const CarShop = () => {
 
     const buttonCell = (row) => {
         if(editing !== null && editing.index === row.index){
-            return (
-                <div style={{"textAlign": "center"}}>
-                    <button className="btn save" onClick={save}>Save</button>
-                    <button className="btn cancel" onClick={() => setEditing(null)}>Cancel</button>
-                </div>
-            )
+            if(editing.original.hasOwnProperty('_links')) {
+                return (
+                    <div style={{"textAlign": "center"}}>
+                        <button className="btn save" onClick={save}>Save</button>
+                        <button className="btn cancel" onClick={() => setEditing(null)}>Cancel</button>
+                    </div>
+                )
+            } else {
+                return (
+                    <div style={{"textAlign": "center"}}>
+                        <button className="btn add" onClick={save}>Add</button>
+                        <button className="btn cancel" onClick={() => setEditing(null)}>Cancel</button>
+                    </div>
+                )
+            }
         } else {
             return (
                 <div style={{"textAlign": "center"}}>
                     <button className="btn edit" onClick={() => edit(row)}>Edit</button>
-                    <button className="btn remove" onClick={() => remove(row.original._links.self.href)}>Delete</button>
+                    <button className="btn remove" onClick={() => remove(row)}>Delete</button>
                 </div>
             )
         }
@@ -70,7 +80,7 @@ const CarShop = () => {
         .then((data) => {
             setLoading(false);
             setPages(Math.ceil(data._embedded.cars.length / pageSize));
-            setCars(data._embedded.cars);
+            setData({cars: data._embedded.cars, count: data._embedded.cars.length});
         })
     }
     
@@ -81,18 +91,25 @@ const CarShop = () => {
         setEditing(row);
     }
 
-    const remove = url => {
+    const remove = row => {
         setLoading(true);
-        fetch(url, {method: 'DELETE'})
+        fetch(row.original._links.self.href, {method: 'DELETE'})
         .then(() => {
+            let newData = data;
+            newData.cars.splice(row.index, 1);
+            setData({
+                cars: newData.cars,
+                count:newData.count--
+            })
             setLoading(false);
-        })
+        });
     }
 
     const save = () => {
         setLoading(true);
-        fetch(editing.original._links.self.href, {
-            method: 'PUT',
+        let isNew = editing.original.hasOwnProperty('_links') ? false : true;
+        fetch(isNew ? `${apiUrl}/cars` : editing.original._links.self.href, {
+            method: isNew ? 'POST' : 'PUT',
             body: JSON.stringify(editing.original),
             headers: {
                 'Content-Type': 'application/json'
@@ -105,17 +122,16 @@ const CarShop = () => {
     }
 
     const add = () => {
-        let newCars = cars;
+        let newCars = data.cars;
         newCars.unshift({
-            'brand': '',
-            'model': '',
-            'color': '',
-            'fuel': '',
-            'price': '',
-            'year': ''
+            'brand': 'Type a brand',
+            'model': 'Type a model',
+            'color': 'Type a color',
+            'fuel': 'Type a fuel',
+            'price': 'Type a price',
+            'year': 'Type a year'
         });
-        console.log(newCars);
-        setCars(newCars);
+        setData({cars: newCars, count: newCars.length});
     }
 
     const editableCell = props => {
@@ -145,7 +161,7 @@ const CarShop = () => {
             </header>
             <main>
                 <ReactTable
-                    data={cars} 
+                    data={data.cars} 
                     columns={columns} 
                     pages={pages}
                     loading={loading}

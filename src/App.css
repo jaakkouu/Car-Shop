@@ -45,7 +45,7 @@
     color: #ffffff
 }
 
-.btn.save {
+.btn.save, .btn.add {
     background-color: #2ECC40
 }
 
