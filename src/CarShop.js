@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import ReactTable from 'react-table';
-import {CSVDownload} from 'react-csv';
+import {CSVLink} from 'react-csv';
 import 'react-table/react-table.css';
 
 const CarShop = () => {
 
+    const [reactTable, setReactTable] = useState(React.createRef());
+    const [filterable, setFilterable] = useState(false);
     const [data, setData] = useState({});
+    const [csv, setCSV] = useState([]);
+    const [csvLink, setCSVLink] = useState(null);
     const [pages, setPages] = useState(null);
     const [loading, setLoading] = useState(false);
     const [editing, setEditing] = useState(null);
@@ -40,34 +44,76 @@ const CarShop = () => {
             )
         }
     }
-     
+
+    const sliderColumnFilter = props => {
+        let min = Math.min.apply(Math, data.cars.map(function(o) { return o[props.column.id]; })),
+            max = Math.max.apply(Math, data.cars.map(function(o) { return o[props.column.id]; }));
+        return <div>
+            <span style={{textAlign: 'center'}}>{props.filter !== undefined ? props.filter.value : min}</span>
+            <div>
+                <input type="range" defaultValue={min} onChange={(e) => props.onChange(e.target.value)} min={min} max={max} />
+            </div>
+        </div>
+    }
+
+    const selectColumnFilter = props => {
+        const options = data.cars.filter((car, i) => {
+            return i === data.cars.findIndex(obj => {
+                return car[props.column.id] === obj[props.column.id];
+            })
+        });
+        return <select onChange={(e) => props.onChange(e.target.value)}>
+            <option value="">All</option>
+            {options.map((option, i) => <option key={i} value={option[props.column.id]}>{option[props.column.id]}</option>)}
+        </select>
+    }
+
+    const greaterOrEqual = (filter, row) => {
+        const rowValue = row[filter.id];
+        if(!rowValue) {
+            return;
+        }
+        const filterValue = filter.value || "";
+        return rowValue >= filterValue;
+    }
+
     const columns = [
         {
             Header: 'Brand',
             accessor: 'brand',
-            Cell: props => editableCell(props)
+            Cell: props => editableCell(props),
+            Filter: selectColumnFilter
         }, {
             Header: 'Model',
             accessor: 'model',
-            Cell: props => editableCell(props)
+            Cell: props => editableCell(props),
+            Filter: selectColumnFilter
         }, {
             Header: 'Color',
             accessor: 'color',
-            Cell: props => editableCell(props)
+            Cell: props => editableCell(props),
+            Filter: selectColumnFilter
         }, {
             Header: 'Fuel',
             accessor: 'fuel',
-            Cell: props => editableCell(props)
+            Cell: props => editableCell(props),
+            Filter: selectColumnFilter
         }, {
             Header: 'Year',
             accessor: 'year',
-            Cell: props => editableCell(props)
+            Cell: props => editableCell(props),
+            Filter: sliderColumnFilter,
+            filterMethod: (filter, row) => greaterOrEqual(filter, row)
+
         }, {
             Header: 'Price',
             accessor: 'price',
-            Cell: props => editableCell(props)
+            Cell: props => editableCell(props),
+            Filter: sliderColumnFilter,
+            filterMethod: (filter, row) => greaterOrEqual(filter, row)
         }, {
-            Header: '',
+            Header: <div><button className="btn filter" onClick={() => setFilterable(!filterable)}>{filterable ? 'Unfilter' : 'Filter'}</button></div>,
+            filterable: false,
             Cell: buttonCell,
             sortable: false
         }
@@ -92,15 +138,26 @@ const CarShop = () => {
     }
 
     const remove = row => {
-        setLoading(true);
-        fetch(row.original._links.self.href, {method: 'DELETE'})
-        .then(() => {
-            let newData = data;
-            newData.cars.splice(row.index, 1);
+        let newCars = data.cars,
+            isNew = row.original.hasOwnProperty('_links') ? false : true;
+        if(isNew){
+            newCars.splice(row.index, 1);
             setData({
-                cars: newData.cars,
-                count:newData.count--
-            })
+                cars: newCars,
+                count: newCars.count--
+            });
+            return;
+        }
+        setLoading(true);
+        fetch(row.original._links.self.href, {
+            method: 'DELETE'
+        })
+        .then(() => {
+            newCars.splice(row.index, 1);
+            setData({
+                cars: newCars,
+                count: newCars.count--
+            });
             setLoading(false);
         });
     }
@@ -124,12 +181,12 @@ const CarShop = () => {
     const add = () => {
         let newCars = data.cars;
         newCars.unshift({
-            'brand': 'Type a brand',
-            'model': 'Type a model',
-            'color': 'Type a color',
-            'fuel': 'Type a fuel',
-            'price': 'Type a price',
-            'year': 'Type a year'
+            'brand': '',
+            'model': '',
+            'color': '',
+            'fuel': '',
+            'price': '',
+            'year': ''
         });
         setData({cars: newCars, count: newCars.length});
     }
@@ -148,11 +205,21 @@ const CarShop = () => {
     }
 
     const exportCSV = () => {
-
+        const data = [];
+        reactTable.getResolvedState().sortedData.forEach((obj) => {
+            let newObj = {};
+            for(let i = 0; i < columns.length; i++){
+                if(columns[i].Header.constructor !== Object) {
+                    newObj[columns[i].Header] = obj[columns[i].accessor];
+                }
+            }
+            data.push(newObj);
+        });
+        setCSV(data);
+        csvLink.link.click();
     }
 
-    return (
-        <div>
+    return (<div>
             <header>
                 <h1>Car Shop Management Tool</h1>
                 <div>
@@ -161,8 +228,10 @@ const CarShop = () => {
             </header>
             <main>
                 <ReactTable
+                    ref={(r) => setReactTable(r)}
                     data={data.cars} 
                     columns={columns} 
+                    filterable={filterable}
                     pages={pages}
                     loading={loading}
                     defaultPageSize={pageSize}
@@ -171,10 +240,15 @@ const CarShop = () => {
             </main>
             <footer>
                 <button className="btn primary" onClick={exportCSV}>Export CSV</button>
+                <CSVLink
+                    data={csv}
+                    filename="data.csv"
+                    className="hidden"
+                    ref={(r) => setCSVLink(r)}
+                    target="_blank"
+                />
             </footer>
-        </div>
-    )
+        </div>)
 }
 
-export default CarShop; 
-
+export default CarShop;

@@ -9,11 +9,13 @@
     gap: 10px
 }
 
-.ReactTable .rt-td {
+.ReactTable .rt-td,
+.ReactTable .rt-th {
     align-self: center
 }
 
-.ReactTable .rt-td input {
+.ReactTable .rt-td input,
+.ReactTable .rt-th select {
     width: 100%;
     border: 0;
     font-size: 16px;
@@ -37,7 +39,8 @@
     font-weight: bold;
     text-shadow: 1px 1px 1px rgba(0,0,0,0.2);
     border-radius: 5px;  
-    min-width: 80px
+    width: 100%;
+    max-width: 80px
 }
 
 .btn.primary {
