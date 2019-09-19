@@ -9,20 +9,20 @@
     gap: 10px
 }
 
-.ReactTable .rt-td,
-.ReactTable .rt-th {
+.App .ReactTable .rt-td,
+.App .ReactTable .rt-th {
     align-self: center
 }
 
-.ReactTable .rt-td input,
-.ReactTable .rt-th select {
+.App .ReactTable .rt-td input,
+.App .ReactTable .rt-th select {
     width: 100%;
     border: 0;
     font-size: 16px;
     background: transparent
 }
 
-.ReactTable .rt-td div[contenteditable=true] {
+.App .ReactTable .rt-td div[contenteditable=true] {
     background-color: #0000;
     border-bottom: 1px solid #ccc;
     width: 100%;
@@ -30,7 +30,12 @@
     overflow: hidden
 }
 
-.btn {
+.App a.btn {
+    font-size: 13px;
+    text-decoration: none
+}
+
+.App .btn {
     cursor: pointer;
     border: 1px solid #eee;
     padding: 5px 12px;
@@ -43,24 +48,24 @@
     max-width: 80px
 }
 
-.btn.primary {
+.App .btn.primary {
     background-color: #0074D9;
     color: #ffffff
 }
 
-.btn.save, .btn.add {
+.App .btn.save, .btn.add {
     background-color: #2ECC40
 }
 
-.btn.edit {
+.App .btn.edit {
     background-color: #FF851B
 }
 
-.btn.remove, .btn.cancel  {
+.App .btn.remove, .btn.cancel  {
     background-color: #FF4136
 }
 
-.btn:hover {
+.App .btn:hover {
     text-shadow: none;
     color: #555555;
     background-color: #ececec;
@@ -69,4 +74,8 @@
 
 .App footer {
     margin-top: 10px
+}
+
+.App .hidden {
+    display: none
 }

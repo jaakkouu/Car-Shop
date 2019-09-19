@@ -9,7 +9,6 @@ const CarShop = () => {
     const [filterable, setFilterable] = useState(false);
     const [data, setData] = useState({});
     const [csv, setCSV] = useState([]);
-    const [csvLink, setCSVLink] = useState(null);
     const [pages, setPages] = useState(null);
     const [loading, setLoading] = useState(false);
     const [editing, setEditing] = useState(null);
@@ -205,7 +204,7 @@ const CarShop = () => {
     }
 
     const exportCSV = () => {
-        const data = [];
+        const csvData = [];
         reactTable.getResolvedState().sortedData.forEach((obj) => {
             let newObj = {};
             for(let i = 0; i < columns.length; i++){
@@ -213,18 +212,19 @@ const CarShop = () => {
                     newObj[columns[i].Header] = obj[columns[i].accessor];
                 }
             }
-            data.push(newObj);
+            csvData.push(newObj);
         });
-        setCSV(data);
-        csvLink.link.click();
+        setCSV(csvData);
     }
 
     return (<div>
             <header>
                 <h1>Car Shop Management Tool</h1>
+                {!filterable ?
                 <div>
                     <button className="btn primary" onClick={add}>Create New Car</button>
                 </div>
+                : ''}
             </header>
             <main>
                 <ReactTable
@@ -239,14 +239,13 @@ const CarShop = () => {
                 />
             </main>
             <footer>
-                <button className="btn primary" onClick={exportCSV}>Export CSV</button>
                 <CSVLink
                     data={csv}
+                    onClick={() => exportCSV()}
                     filename="data.csv"
-                    className="hidden"
-                    ref={(r) => setCSVLink(r)}
-                    target="_blank"
-                />
+                    className="btn primary">
+                    {filterable ? 'Download Filtered CSV' : 'Download CSV'}
+                </CSVLink>
             </footer>
         </div>)
 }
